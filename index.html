@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusicFY</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="./images/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="style.css"/>
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+<!-- ============ SETUP SCREEN ============ -->
+<div id="setup-screen" class="device-panel screen">
+    <div class="setup-card">
+        <div class="setup-header">
+            <span class="power-dot"></span>
+            <h1>MusicFY</h1>
+            <p>A Fisher-Yates shuffler for YouTube playlists.</p>
+        </div>
+
+        <div class="field">
+            <label for="playlist-input">Playlist URL or ID</label>
+            <input id="playlist-input" type="text" placeholder="https://music.youtube.com/playlist?list=…"
+                   autocomplete="off" spellcheck="false">
+        </div>
+
+        <button id="load-playlist-btn" class="btn-primary">Load playlist</button>
+        <p id="setup-error" class="error-text hidden"></p>
+        <div id="setup-loading" class="loading-row hidden">
+            <span class="spinner"></span>
+            <span id="setup-loading-text">Fetching tracks…</span>
+        </div>
+
+        <div id="saved-section" class="hidden">
+            <div class="divider">recent playlists</div>
+            <ul id="saved-list" class="saved-list"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- ============ PLAYER SCREEN ============ -->
+<div id="player-screen" class="device-panel screen hidden">
+    <div class="topbar">
+        <div class="brand">
+            <span id="power-dot" class="power-dot"></span>
+            <span class="wordmark">MusicFY</span>
+        </div>
+        <div class="topbar-actions">
+            <button id="queue-btn" class="icon-btn" title="Queue" aria-label="Open queue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                    <line x1="4" y1="6" x2="20" y2="6"/>
+                    <line x1="4" y1="12" x2="20" y2="12"/>
+                    <line x1="4" y1="18" x2="14" y2="18"/>
+                </svg>
+            </button>
+            <button id="settings-btn" class="icon-btn" title="Change playlist" aria-label="Change playlist">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                     stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="display-frame">
+        <img id="album-art" alt="" src="" style="display:none;">
+        <div id="display-placeholder" class="display-placeholder">Loading track…</div>
+    </div>
+
+    <div class="track-info">
+        <a id="track-title" class="track-title" href="#" target="_blank" rel="noopener noreferrer"
+           title="Open on YouTube">—</a>
+        <a id="track-channel" class="track-channel" href="#" target="_blank" rel="noopener noreferrer"
+           title="Open artist on YouTube Music">—</a>
+    </div>
+
+    <div class="progress-row">
+        <span id="cur-time" class="time">0:00</span>
+        <input id="seek-input" type="range" min="0" max="100" value="0" step="0.1" aria-label="Seek">
+        <span id="dur-time" class="time end">0:00</span>
+    </div>
+
+    <div class="controls-row">
+        <button id="reshuffle-btn" class="btn-circle" title="Reshuffle queue" aria-label="Reshuffle queue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <polyline points="16 3 21 3 21 8"/>
+                <line x1="4" y1="20" x2="21" y2="3"/>
+                <polyline points="21 16 21 21 16 21"/>
+                <line x1="15" y1="15" x2="21" y2="21"/>
+                <line x1="4" y1="4" x2="9" y2="9"/>
+            </svg>
+        </button>
+        <button id="prev-btn" class="btn-circle" title="Previous" aria-label="Previous track">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M6 6h2v12H6zM20 6L9 12l11 6z"/>
+            </svg>
+        </button>
+        <button id="play-pause-btn" class="btn-circle primary" title="Play/Pause" aria-label="Play or pause">
+            <svg id="icon-play" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M8 5v14l12-7z"/>
+            </svg>
+            <svg id="icon-pause" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:none;">
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z"/>
+            </svg>
+        </button>
+        <button id="next-btn" class="btn-circle" title="Next" aria-label="Next track">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                <path d="M16 6h2v12h-2zM4 6l11 6-11 6z"/>
+            </svg>
+        </button>
+        <button id="repeat-btn" class="btn-circle" title="Repeat: off" aria-label="Repeat mode">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <polyline points="17 1 21 5 17 9"/>
+                <path d="M3 11V9a4 4 0 014-4h14"/>
+                <polyline points="7 23 3 19 7 15"/>
+                <path d="M21 13v2a4 4 0 01-4 4H3"/>
+            </svg>
+            <span id="repeat-badge" class="repeat-badge hidden">1</span>
+        </button>
+    </div>
+
+    <div class="volume-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+             stroke-linejoin="round">
+            <polygon points="3 9 7 9 12 4 12 20 7 15 3 15 3 9"/>
+            <path d="M16 8a5 5 0 010 8"/>
+        </svg>
+        <input id="volume-input" type="range" min="0" max="100" value="80" aria-label="Volume">
+    </div>
+</div>
+
+<!-- ============ QUEUE DRAWER ============ -->
+<div id="drawer-backdrop" class="drawer-backdrop"></div>
+<div id="queue-drawer" class="drawer">
+    <div class="drawer-header">
+        <div>
+            <h2>Up next</h2>
+        </div>
+        <button id="drawer-close-btn" class="icon-btn" aria-label="Close queue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <line x1="5" y1="5" x2="19" y2="19"/>
+                <line x1="19" y1="5" x2="5" y2="19"/>
+            </svg>
+        </button>
+    </div>
+
+    <ul id="queue-list" class="queue-list"></ul>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="yt-player-container">
+    <div id="yt-player"></div>
+</div>
+<audio id="silent-audio" loop></audio>
+
+</body>
+</html>

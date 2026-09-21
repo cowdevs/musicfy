@@ -1,17 +1,11 @@
 'use strict';
 
 /* ============================================================
-   YOUR API KEY
-   ============================================================ */
-
-var API_KEY = '';
-
-/* ============================================================
    STATE
    ============================================================ */
 
 var state = {
-    apiKey: API_KEY,
+    apiKey: localStorage.getItem('ytsp_apiKey') || '',
     tracks: [],
     queue: [],
     currentIndex: -1,
@@ -36,6 +30,7 @@ var thumbLoadToken = 0; // guards against out-of-order async thumbnail crops
 var setupScreen = document.getElementById('setup-screen');
 var playerScreen = document.getElementById('player-screen');
 
+var apiKeyInput = document.getElementById('api-key-input');
 var playlistInput = document.getElementById('playlist-input');
 var loadPlaylistBtn = document.getElementById('load-playlist-btn');
 var setupError = document.getElementById('setup-error');
@@ -332,16 +327,19 @@ function clearSetupError() {
 
 function beginLoadPlaylist() {
     clearSetupError();
+    var apiKey = apiKeyInput.value.trim();
     var playlistId = extractPlaylistId(playlistInput.value);
-
-    if (!state.apiKey) {
-        showSetupError('No API key set. Open this file in a text editor and set API_KEY near the top of the <script> section.');
+    if (!apiKey) {
+        showSetupError('Enter your YouTube Data API v3 key first.');
         return;
     }
     if (!playlistId) {
         showSetupError('Paste a playlist URL (with a "list=" parameter) or a raw playlist ID.');
         return;
     }
+
+    state.apiKey = apiKey;
+    localStorage.setItem('ytsp_apiKey', apiKey);
 
     loadPlaylistBtn.disabled = true;
     setupLoading.classList.remove('hidden');
@@ -461,7 +459,8 @@ function onPlayerStateChange(e) {
         iconPlay.style.display = 'none';
         iconPause.style.display = '';
         powerDot.classList.add('playing');
-        silentAudio.play().catch(function () {});
+        silentAudio.play().catch(function () {
+        });
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         startProgressTimer();
         updateWindowTitle();
@@ -829,6 +828,9 @@ function closeDrawer() {
    ============================================================ */
 
 loadPlaylistBtn.addEventListener('click', beginLoadPlaylist);
+apiKeyInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') beginLoadPlaylist();
+});
 playlistInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') beginLoadPlaylist();
 });
@@ -900,6 +902,8 @@ document.addEventListener('keydown', function (e) {
 function init() {
     setupSilentAudio();
     loadYTScript();
+
+    if (state.apiKey) apiKeyInput.value = state.apiKey;
 
     var savedVolume = localStorage.getItem('ytsp_volume');
     if (savedVolume != null) volumeInput.value = savedVolume;

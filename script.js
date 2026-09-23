@@ -60,7 +60,7 @@ var repeatBtn = document.getElementById('repeat-btn');
 var repeatBadge = document.getElementById('repeat-badge');
 
 var queueBtn = document.getElementById('queue-btn');
-var settingsBtn = document.getElementById('settings-btn');
+var homeBtn = document.getElementById('home-btn');
 var queueDrawer = document.getElementById('queue-drawer');
 var drawerBackdrop = document.getElementById('drawer-backdrop');
 var drawerCloseBtn = document.getElementById('drawer-close-btn');
@@ -79,9 +79,6 @@ function cryptoRandom() {
     return buf[0] / 4294967296;
 }
 
-// Fisher–Yates shuffle using crypto-grade randomness — a true,
-// uniform random permutation with no relation to watch history,
-// likes, or any recommendation signal.
 function shuffle(arr) {
     var a = arr.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -170,9 +167,30 @@ function setSliderFill(input, pct) {
     input.style.background = 'linear-gradient(to right, var(--accent) ' + pct + '%, var(--border) ' + pct + '%)';
 }
 
-/* ============================================================
-   LOCAL STORAGE — API key & saved playlists
-   ============================================================ */
+
+
+// THINGS IN LOCAL STORAGE
+
+function getCachedPlaylist(playlistId) {
+    try {
+        var raw = localStorage.getItem('ytsp_cache:' + playlistId);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setCachedPlaylist(playlistId, title, tracks) {
+    try {
+        localStorage.setItem('ytsp_cache:' + playlistId, JSON.stringify({
+            title: title,
+            tracks: tracks,
+            cachedAt: Date.now(),
+        }));
+    } catch (e) {
+        // localStorage full or unavailable — just skip caching, not fatal.
+    }
+}
 
 function getSavedPlaylists() {
     try {
@@ -227,16 +245,28 @@ function renderSavedPlaylists() {
             beginLoadPlaylist();
         });
 
+        var refreshBtn = document.createElement('button');
+        refreshBtn.className = 'refresh-btn';
+        refreshBtn.title = 'Refresh from YouTube';
+        refreshBtn.setAttribute('aria-label', 'Refresh this playlist from YouTube');
+        refreshBtn.innerHTML = '<span class="material-symbols-outlined small">refresh</span>';
+        refreshBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            playlistInput.value = p.id;
+            beginLoadPlaylist(true);
+        });
+
         var removeBtn = document.createElement('button');
         removeBtn.className = 'remove-btn';
         removeBtn.setAttribute('aria-label', 'Remove saved playlist');
-        removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>';
+        removeBtn.innerHTML = '<span class="material-symbols-outlined small">delete</span>';
         removeBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             removeSavedPlaylist(p.id);
         });
 
         li.appendChild(mainBtn);
+        li.appendChild(refreshBtn);
         li.appendChild(removeBtn);
         savedList.appendChild(li);
     });
@@ -325,10 +355,11 @@ function clearSetupError() {
     setupError.textContent = '';
 }
 
-function beginLoadPlaylist() {
+function beginLoadPlaylist(forceRefresh) {
     clearSetupError();
     var apiKey = apiKeyInput.value.trim();
     var playlistId = extractPlaylistId(playlistInput.value);
+
     if (!apiKey) {
         showSetupError('Enter your YouTube Data API v3 key first.');
         return;
@@ -340,6 +371,12 @@ function beginLoadPlaylist() {
 
     state.apiKey = apiKey;
     localStorage.setItem('ytsp_apiKey', apiKey);
+
+    var cached = !forceRefresh && getCachedPlaylist(playlistId);
+    if (cached) {
+        finishLoadingPlaylist(playlistId, cached.title, cached.tracks);
+        return;
+    }
 
     loadPlaylistBtn.disabled = true;
     setupLoading.classList.remove('hidden');
@@ -360,20 +397,25 @@ function beginLoadPlaylist() {
             return;
         }
 
-        state.tracks = tracks;
-        state.currentPlaylistId = playlistId;
-        savePlaylistToHistory({id: playlistId, title: title || playlistId});
-
-        state.queue = shuffle(tracks);
-        state.currentIndex = -1;
-        renderQueue();
-        showPlayerScreen();
-        playTrackAt(0);
+        setCachedPlaylist(playlistId, title || playlistId, tracks);
+        finishLoadingPlaylist(playlistId, title || playlistId, tracks);
     }).catch(function (err) {
         loadPlaylistBtn.disabled = false;
         setupLoading.classList.add('hidden');
         showSetupError(friendlyFetchError(err));
     });
+}
+
+function finishLoadingPlaylist(playlistId, title, tracks) {
+    state.tracks = tracks;
+    state.currentPlaylistId = playlistId;
+    savePlaylistToHistory({ id: playlistId, title: title });
+
+    state.queue = shuffle(tracks); // always reshuffled fresh, even from cache
+    state.currentIndex = -1;
+    renderQueue();
+    showPlayerScreen();
+    playTrackAt(0);
 }
 
 function showPlayerScreen() {
@@ -827,7 +869,7 @@ function closeDrawer() {
    EVENT WIRING
    ============================================================ */
 
-loadPlaylistBtn.addEventListener('click', beginLoadPlaylist);
+loadPlaylistBtn.addEventListener('click', function () { beginLoadPlaylist(false); });
 apiKeyInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') beginLoadPlaylist();
 });
@@ -835,7 +877,7 @@ playlistInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') beginLoadPlaylist();
 });
 
-settingsBtn.addEventListener('click', showSetupScreen);
+homeBtn.addEventListener('click', showSetupScreen);
 queueBtn.addEventListener('click', openDrawer);
 drawerCloseBtn.addEventListener('click', closeDrawer);
 drawerBackdrop.addEventListener('click', closeDrawer);

@@ -64,19 +64,15 @@ input:focus-visible,
     display: none !important;
 }
 
-.material-symbols-outlined {
-    font-size: 24px;
-    font-variation-settings: 'FILL' 0, 'wght' 200, 'opsz' 24;
+span.material-symbols-outlined {
+    -webkit-user-select: none;
+    user-select: none;
+    font-size: inherit;
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'opsz' 24;
 }
 
-.material-symbols-outlined.controls {
-    font-size: 20px;
+span.material-symbols-outlined.filled {
     font-variation-settings: 'FILL' 1, 'wght' 300, 'opsz' 24;
-}
-
-.material-symbols-outlined.small {
-    font-size: 16px;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'opsz' 24;
 }
 
 /* ---------- device panel ---------- */
@@ -128,6 +124,8 @@ input:focus-visible,
 }
 
 .wordmark {
+    -webkit-user-select: none;
+    user-select: none;
     font-size: 13px;
     letter-spacing: 0.04em;
     color: var(--text-dim);
@@ -155,9 +153,16 @@ input:focus-visible,
     background: var(--panel-2);
 }
 
+.icon-btn span {
+    font-size: 16px;
+}
+
 /* ---------- display / thumbnail ---------- */
 
 .display-frame {
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -201,6 +206,34 @@ input:focus-visible,
     font-size: 13px;
     text-align: center;
     padding: 0 20px;
+}
+
+.display-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    border: none;
+    padding: 0;
+    color: #fff;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.display-frame:hover .display-overlay {
+    opacity: 1;
+}
+
+.display-overlay:focus-visible {
+    opacity: 1;
+}
+
+.display-overlay span {
+    font-size: 32px;
 }
 
 /* ---------- track info ---------- */
@@ -256,6 +289,8 @@ input:focus-visible,
 }
 
 .time {
+    -webkit-user-select: none;
+    user-select: none;
     font-family: var(--mono), monospace;
     font-size: 11px;
     color: var(--text-faint);
@@ -263,6 +298,8 @@ input:focus-visible,
 }
 
 .time.end {
+    -webkit-user-select: none;
+    user-select: none;
     text-align: right;
 }
 
@@ -283,7 +320,7 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 50%;
     background: var(--accent);
     box-shadow: 0 0 0 3px rgba(249, 62, 157, 0.15);
-    margin-top: -4.5px;
+    margin-top: -1.5px;
     cursor: pointer;
 }
 
@@ -330,6 +367,10 @@ input[type="range"]::-moz-range-track {
     color: var(--text);
 }
 
+.btn-circle span {
+    font-size: 16px;
+}
+
 .btn-circle.active {
     color: var(--accent);
     border-color: var(--accent-dim);
@@ -347,6 +388,10 @@ input[type="range"]::-moz-range-track {
 .btn-circle.primary:hover {
     color: #171308;
     filter: brightness(1.06);
+}
+
+.btn-circle.primary span {
+    font-size: 18px;
 }
 
 .repeat-badge {
@@ -378,6 +423,7 @@ input[type="range"]::-moz-range-track {
 }
 
 .volume-row span {
+    font-size: 14px;
     flex-shrink: 0;
 }
 
@@ -444,10 +490,12 @@ input[type="range"]::-moz-range-track {
 }
 
 .drawer-header {
+    -webkit-user-select: none;
+    user-select: none;
     padding: 18px 18px 12px;
     border-bottom: 1px solid var(--border-soft);
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 10px;
 }
@@ -490,6 +538,10 @@ input[type="range"]::-moz-range-track {
     color: var(--text);
 }
 
+.btn-chip span {
+    font-size: 12px;
+}
+
 .queue-list {
     list-style: none;
     margin: 0;
@@ -499,6 +551,8 @@ input[type="range"]::-moz-range-track {
 }
 
 .queue-item {
+    -webkit-user-select: none;
+    user-select: none;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -599,6 +653,8 @@ input[type="range"]::-moz-range-track {
 }
 
 .field {
+    -webkit-user-select: none;
+    user-select: none;
     margin-bottom: 14px;
 }
 
@@ -630,6 +686,8 @@ input[type="range"]::-moz-range-track {
 }
 
 .btn-primary {
+    -webkit-user-select: none;
+    user-select: none;
     width: 100%;
     background: var(--accent);
     color: #171308;
@@ -659,6 +717,8 @@ input[type="range"]::-moz-range-track {
 }
 
 .divider {
+    -webkit-user-select: none;
+    user-select: none;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -736,6 +796,10 @@ input[type="range"]::-moz-range-track {
 .saved-item .remove-btn:hover {
     color: var(--danger);
     background: rgba(209, 106, 99, 0.1);
+}
+
+.saved-item .refresh-btn span, .saved-item .remove-btn span {
+    font-size: 14px;
 }
 
 .loading-row {

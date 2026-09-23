@@ -1,9 +1,5 @@
 'use strict';
 
-/* ============================================================
-   STATE
-   ============================================================ */
-
 var state = {
     apiKey: localStorage.getItem('ytsp_apiKey') || '',
     tracks: [],
@@ -19,13 +15,9 @@ var ytApiReady = false;
 var pendingTrackId = null;
 var isSeeking = false;
 var progressTimer = null;
-var lastPlayerSignal = 0; // last time the YT player told us anything at all
+var lastPlayerSignal = 0;
 var watchdogTimer = null;
-var thumbLoadToken = 0; // guards against out-of-order async thumbnail crops
-
-/* ============================================================
-   DOM REFS
-   ============================================================ */
+var thumbLoadToken = 0;
 
 var setupScreen = document.getElementById('setup-screen');
 var playerScreen = document.getElementById('player-screen');
@@ -42,6 +34,9 @@ var savedList = document.getElementById('saved-list');
 var powerDot = document.getElementById('power-dot');
 var albumArt = document.getElementById('album-art');
 var displayPlaceholder = document.getElementById('display-placeholder');
+var displayOverlay = document.getElementById('display-overlay');
+var overlayIconPlay = document.getElementById('overlay-icon-play');
+var overlayIconPause = document.getElementById('overlay-icon-pause');
 var trackTitleEl = document.getElementById('track-title');
 var trackChannelEl = document.getElementById('track-channel');
 
@@ -69,9 +64,8 @@ var queueListEl = document.getElementById('queue-list');
 var toastEl = document.getElementById('toast');
 var silentAudio = document.getElementById('silent-audio');
 
-/* ============================================================
-   UTILITIES
-   ============================================================ */
+
+// UTILITY FUNCTIONS
 
 function cryptoRandom() {
     var buf = new Uint32Array(1);
@@ -97,16 +91,10 @@ function formatTime(sec) {
     return m + ':' + (s < 10 ? '0' : '') + s;
 }
 
-// YouTube doesn't expose thumbnail resolution through the Data API, and
-// requesting a size that doesn't exist for a video (maxresdefault often
-// only exists for HD uploads) doesn't 404 — it silently serves a generic
-// 120x90 grey placeholder instead. So getting the best real size means
-// walking the sizes from highest to lowest and detecting that placeholder
-// by its telltale fixed dimensions. hqdefault is YouTube's guaranteed
-// fallback — effectively every public video has one.
-var THUMBNAIL_SIZES = ['maxresdefault', 'sddefault', 'hqdefault'];
 
 function bestThumbnailUrl(videoId, callback) {
+    const THUMBNAIL_SIZES = ['maxresdefault', 'sddefault', 'hqdefault'];
+
     tryLoad(0);
 
     function tryLoad(i) {
@@ -129,9 +117,6 @@ function bestThumbnailUrl(videoId, callback) {
     }
 }
 
-// YouTube auto-generates a channel per artist for algorithmically-matched
-// music, named "Artist Name - Topic". That suffix is a channel-type label,
-// not part of the artist's actual name, so strip it for display.
 function cleanChannelName(name) {
     return (name || '').replace(/\s*-\s*topic\s*$/i, '').trim();
 }
@@ -146,7 +131,7 @@ function extractPlaylistId(raw) {
         var url = new URL(input);
         var listParam = url.searchParams.get('list');
         if (listParam) return listParam;
-    } catch (e) { /* not a valid URL */
+    } catch (e) { // invalid URL
     }
     return null;
 }
@@ -168,8 +153,7 @@ function setSliderFill(input, pct) {
 }
 
 
-
-// THINGS IN LOCAL STORAGE
+// LOCAL STORAGE MANAGEMENT
 
 function getCachedPlaylist(playlistId) {
     try {
@@ -272,9 +256,8 @@ function renderSavedPlaylists() {
     });
 }
 
-/* ============================================================
-   YOUTUBE DATA API
-   ============================================================ */
+
+// YOUTUBE DATA API STUFF
 
 function apiRequest(path, params) {
     var url = new URL('https://www.googleapis.com/youtube/v3/' + path);
@@ -331,13 +314,9 @@ function fetchPlaylistTracks(playlistId) {
     return page(null);
 }
 
-/* ============================================================
-   SETUP SCREEN FLOW
-   ============================================================ */
 
-// fetch() rejects with a plain TypeError for network/CORS-level failures
-// (as opposed to the Error objects apiRequest() throws for API responses
-// it successfully received, like a bad key or missing playlist).
+// SETUP SCREEN
+
 function friendlyFetchError(err) {
     if (err instanceof TypeError) {
         return 'Couldn\u2019t reach YouTube\u2019s API.';
@@ -409,7 +388,7 @@ function beginLoadPlaylist(forceRefresh) {
 function finishLoadingPlaylist(playlistId, title, tracks) {
     state.tracks = tracks;
     state.currentPlaylistId = playlistId;
-    savePlaylistToHistory({ id: playlistId, title: title });
+    savePlaylistToHistory({id: playlistId, title: title});
 
     state.queue = shuffle(tracks); // always reshuffled fresh, even from cache
     state.currentIndex = -1;
@@ -429,9 +408,8 @@ function showSetupScreen() {
     if (state.player && state.player.pauseVideo) state.player.pauseVideo();
 }
 
-/* ============================================================
-   YOUTUBE IFRAME PLAYER
-   ============================================================ */
+
+// YOUTUEB IFRAME API STUFF
 
 function loadYTScript() {
     var tag = document.createElement('script');
@@ -500,6 +478,8 @@ function onPlayerStateChange(e) {
         state.isPlaying = true;
         iconPlay.style.display = 'none';
         iconPause.style.display = '';
+        overlayIconPlay.style.display = 'none';
+        overlayIconPause.style.display = '';
         powerDot.classList.add('playing');
         silentAudio.play().catch(function () {
         });
@@ -510,6 +490,8 @@ function onPlayerStateChange(e) {
         state.isPlaying = false;
         iconPlay.style.display = '';
         iconPause.style.display = 'none';
+        overlayIconPlay.style.display = '';
+        overlayIconPause.style.display = 'none';
         powerDot.classList.remove('playing');
         silentAudio.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -537,9 +519,8 @@ function onPlayerError(e) {
     playTrackAt(nextIndex);
 }
 
-/* ============================================================
-   PLAYBACK CONTROL
-   ============================================================ */
+
+// PLAYBACK CONTROL
 
 function playTrackAt(index) {
     if (index < 0 || index >= state.queue.length) return;
@@ -587,8 +568,6 @@ function scheduleWatchdog() {
         if (state.currentIndex < 0) return;
         if (lastPlayerSignal < checkTime) {
             showToast('The YouTube player hasn\u2019t responded. An ad blocker or firewall may be blocking youtube.com \u2014 try disabling it for this page, then reload.', 7000);
-        } else if (!state.isPlaying) {
-            showToast('Your browser blocked autoplay \u2014 click \u25B6 to start playback.', 5000);
         }
     }, 4000);
 }
@@ -656,17 +635,13 @@ function reshuffleQueue() {
     showToast('Queue reshuffled — the rest of the order is fresh.');
 }
 
-/* ============================================================
-   UI UPDATES
-   ============================================================ */
+
+// UI UPDATES
 
 function updateNowPlayingUI(track) {
     trackTitleEl.textContent = track.title;
     trackTitleEl.href = 'https://www.youtube.com/watch?v=' + track.id;
     trackChannelEl.textContent = track.channel;
-    // Prefer linking straight to the artist's channel; if the API didn't
-    // give us a channel ID for this item, fall back to a YouTube Music
-    // search for their name so the link still lands somewhere useful.
     trackChannelEl.href = track.channelId
         ? 'https://music.youtube.com/channel/' + track.channelId
         : 'https://music.youtube.com/search?q=' + encodeURIComponent(track.channel);
@@ -710,6 +685,7 @@ function renderQueue() {
         thumb.loading = 'lazy';
         thumb.src = 'https://i.ytimg.com/vi/' + track.id + '/hqdefault.jpg';
         thumb.alt = '';
+        thumb.draggable = false;
 
         var meta = document.createElement('div');
         meta.className = 'meta';
@@ -741,9 +717,8 @@ function renderQueue() {
     });
 }
 
-/* ============================================================
-   PROGRESS / SEEK
-   ============================================================ */
+
+// PROGRESS BAR
 
 function startProgressTimer() {
     stopProgressTimer();
@@ -774,14 +749,13 @@ function updateProgressUI() {
                 playbackRate: 1,
                 position: Math.min(cur, dur)
             });
-        } catch (e) { /* not supported */
+        } catch (e) { // not supported
         }
     }
 }
 
-/* ============================================================
-   MEDIA SESSION (hardware / OS media key support)
-   ============================================================ */
+
+// MEDIA SESSION API STUFF
 
 function setupMediaSessionHandlers() {
     if (!('mediaSession' in navigator)) return;
@@ -804,7 +778,7 @@ function setupMediaSessionHandlers() {
         navigator.mediaSession.setActionHandler('stop', function () {
             state.player && state.player.pauseVideo();
         });
-    } catch (e) { /* some handlers may be unsupported */
+    } catch (e) { // unsupported handlers
     }
 }
 
@@ -816,11 +790,6 @@ function updateMediaSessionMetadata(track) {
     });
 }
 
-// The real audio plays inside a cross-origin YouTube iframe, which
-// browsers can't always tie a Media Session to on its own. This
-// silent looping clip gives the tab an actual playing <audio>
-// element so Chrome/Edge reliably surface OS-level media controls
-// (and therefore hardware media keys) for it.
 function setupSilentAudio() {
     var sampleRate = 8000;
     var seconds = 2;
@@ -851,9 +820,8 @@ function setupSilentAudio() {
     silentAudio.volume = 0;
 }
 
-/* ============================================================
-   QUEUE DRAWER
-   ============================================================ */
+
+// QUEUE DRAWER
 
 function openDrawer() {
     queueDrawer.classList.add('open');
@@ -865,11 +833,12 @@ function closeDrawer() {
     drawerBackdrop.classList.remove('open');
 }
 
-/* ============================================================
-   EVENT WIRING
-   ============================================================ */
 
-loadPlaylistBtn.addEventListener('click', function () { beginLoadPlaylist(false); });
+// EVENT WIRING
+
+loadPlaylistBtn.addEventListener('click', function () {
+    beginLoadPlaylist(false);
+});
 apiKeyInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') beginLoadPlaylist();
 });
@@ -882,6 +851,8 @@ queueBtn.addEventListener('click', openDrawer);
 drawerCloseBtn.addEventListener('click', closeDrawer);
 drawerBackdrop.addEventListener('click', closeDrawer);
 reshuffleBtn.addEventListener('click', reshuffleQueue);
+
+displayOverlay.addEventListener('click', togglePlay);
 
 playPauseBtn.addEventListener('click', togglePlay);
 prevBtn.addEventListener('click', playPrev);
@@ -937,9 +908,8 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
-/* ============================================================
-   INIT
-   ============================================================ */
+
+// INIT
 
 function init() {
     setupSilentAudio();

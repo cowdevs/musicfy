@@ -10,7 +10,7 @@
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"/>
     <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@20..48,200..400,0..1"/>
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,300,0..1"/>
     <link rel="stylesheet" href="./style.css"/>
     <script src="./script.js" defer></script>
 </head>
@@ -55,21 +55,25 @@
     <div class="topbar">
         <div class="brand">
             <span id="power-dot" class="power-dot"></span>
-            <span class="wordmark">MusicFY</span>
+            <span class="wordmark" draggable="false">MusicFY</span>
         </div>
         <div class="topbar-actions">
             <button id="queue-btn" class="icon-btn" title="Open queue" aria-label="Open queue">
-                <span class="material-symbols-outlined">queue_music</span>
+                <span class="material-symbols-outlined">menu</span>
             </button>
             <button id="home-btn" class="icon-btn" title="Change playlist" aria-label="Change playlist">
-                <span class="material-symbols-outlined">home</span>
+                <span class="material-symbols-outlined">settings</span>
             </button>
         </div>
     </div>
 
     <div class="display-frame">
-        <img id="album-art" draggable="false" alt="" src="" style="display:none;">
+        <img id="album-art" alt="" src="" style="display:none;" draggable="false">
         <div id="display-placeholder" class="display-placeholder">Loading track…</div>
+        <button id="display-overlay" class="display-overlay" aria-label="Play or pause">
+            <span id="overlay-icon-play" class="material-symbols-outlined filled">play_arrow</span>
+            <span id="overlay-icon-pause" class="material-symbols-outlined filled" style="display:none;">pause</span>
+        </button>
     </div>
 
     <div class="track-info">
@@ -80,33 +84,33 @@
     </div>
 
     <div class="progress-row">
-        <span id="cur-time" class="time">0:00</span>
+        <span id="cur-time" class="time" draggable="false">0:00</span>
         <input id="seek-input" type="range" min="0" max="100" value="0" step="0.1" aria-label="Seek">
-        <span id="dur-time" class="time end">0:00</span>
+        <span id="dur-time" class="time end" draggable="false">0:00</span>
     </div>
 
     <div class="controls-row">
         <button id="reshuffle-btn" class="btn-circle" title="Reshuffle queue" aria-label="Reshuffle queue">
-            <span class="material-symbols-outlined controls">shuffle</span>
+            <span class="material-symbols-outlined filled">shuffle</span>
         </button>
         <button id="prev-btn" class="btn-circle" title="Previous" aria-label="Previous track">
-            <span class="material-symbols-outlined controls">skip_previous</span>
+            <span class="material-symbols-outlined filled">skip_previous</span>
         </button>
         <button id="play-pause-btn" class="btn-circle primary" title="Play/Pause" aria-label="Play or pause">
-            <span id="icon-play" class="material-symbols-outlined controls">play_arrow</span>
-            <span id="icon-pause" class="material-symbols-outlined controls" style="display:none;">pause</span>
+            <span id="icon-play" class="material-symbols-outlined filled">play_arrow</span>
+            <span id="icon-pause" class="material-symbols-outlined filled" style="display:none;">pause</span>
         </button>
         <button id="next-btn" class="btn-circle" title="Next" aria-label="Next track">
-            <span class="material-symbols-outlined controls">skip_next</span>
+            <span class="material-symbols-outlined filled">skip_next</span>
         </button>
         <button id="repeat-btn" class="btn-circle" title="Repeat: off" aria-label="Repeat mode">
-            <span class="material-symbols-outlined controls">repeat</span>
+            <span class="material-symbols-outlined filled">repeat</span>
             <span id="repeat-badge" class="repeat-badge hidden">1</span>
         </button>
     </div>
 
     <div class="volume-row">
-        <span class="material-symbols-outlined small">volume_up</span>
+        <span class="material-symbols-outlined">volume_up</span>
         <input id="volume-input" type="range" min="0" max="100" value="80" aria-label="Volume">
     </div>
 </div>
@@ -115,9 +119,7 @@
 <div id="drawer-backdrop" class="drawer-backdrop"></div>
 <div id="queue-drawer" class="drawer">
     <div class="drawer-header">
-        <div>
-            <h2>Up next</h2>
-        </div>
+        <h2>Up next</h2>
         <button id="drawer-close-btn" class="icon-btn" aria-label="Close queue">
             <span class="material-symbols-outlined">close</span>
         </button>

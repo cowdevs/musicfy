@@ -416,10 +416,6 @@ window.onYouTubeIframeAPIReady = function () {
 
 function initPlayer(videoId) {
     var playerVars = {autoplay: 1, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, playsinline: 1, rel: 0};
-    // Passing an origin only helps if it's the page's real http(s) origin —
-    // a wrong one (e.g. the literal string "null" you get from a file://
-    // page) breaks the postMessage handshake entirely and the player goes
-    // silent instead of reporting an error, so only send it when it's valid.
     if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
         playerVars.origin = window.location.origin;
     }
@@ -428,6 +424,7 @@ function initPlayer(videoId) {
         width: '320',
         videoId: videoId,
         playerVars: playerVars,
+        isPLaying: true,
         events: {
             onReady: onPlayerReady,
             onStateChange: onPlayerStateChange,
@@ -454,9 +451,6 @@ function onPlayerReady() {
     state.player.setVolume(parseInt(volumeInput.value, 10));
     setupMediaSessionHandlers();
     startProgressTimer();
-    // Belt-and-braces: playerVars.autoplay doesn't always take effect
-    // (browsers can silently block autoplay-with-sound), so make an
-    // explicit play call too. Harmless if it's already playing.
     state.player.playVideo();
 }
 

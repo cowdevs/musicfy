@@ -833,10 +833,13 @@ input[type="range"]::-moz-range-track {
 }
 
 #yt-player-container {
-    position: absolute;
-    width: 320px;
-    height: 180px;
-    top: -9999px;
-    left: -9999px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0.01;
+    pointer-events: none;
     overflow: hidden;
+    z-index: -1;
 }

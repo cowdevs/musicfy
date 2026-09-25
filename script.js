@@ -464,8 +464,7 @@ function onPlayerStateChange(e) {
         overlayIconPlay.style.display = 'none';
         overlayIconPause.style.display = '';
         powerDot.classList.add('playing');
-        silentAudio.play().catch(function () {
-        });
+        // silentAudio.play().catch(function () {});
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         startProgressTimer();
         updateWindowTitle();
@@ -476,7 +475,7 @@ function onPlayerStateChange(e) {
         overlayIconPlay.style.display = '';
         overlayIconPause.style.display = 'none';
         powerDot.classList.remove('playing');
-        silentAudio.pause();
+        // silentAudio.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else if (e.data === S.ENDED) {
         playNext(true);
@@ -516,7 +515,7 @@ function playTrackAt(index) {
 
     ensurePlayer(track.id);
     updateNowPlayingUI(track);
-    updateMediaSessionMetadata(track, 'https://i.ytimg.com/vi/' + track.id + '/hqdefault.jpg');
+    updateMediaSessionMetadata(track);
     highlightQueueItem(index);
 
     var myToken = ++thumbLoadToken;
@@ -529,7 +528,9 @@ function playTrackAt(index) {
         albumArt.src = src;
         albumArt.style.display = '';
         displayPlaceholder.style.display = 'none';
-        updateMediaSessionMetadata(track, src);
+        if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
+            navigator.mediaSession.metadata.artwork = [{src: src, type: 'image/jpeg'}];
+        }
     });
 
     curTimeEl.textContent = '0:00';
@@ -727,7 +728,6 @@ function setupMediaSessionHandlers() {
     if (!('mediaSession' in navigator)) return;
     try {
         navigator.mediaSession.setActionHandler('play', function () {
-            silentAudio.play().catch(function () {});
             state.player && state.player.playVideo();
         });
         navigator.mediaSession.setActionHandler('pause', function () {
@@ -749,7 +749,7 @@ function setupMediaSessionHandlers() {
     }
 }
 
-function updateMediaSessionMetadata(track) {
+function updateMediaSessionMetadata(track, src) {
     if (!('mediaSession' in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({
         title: track.title,
@@ -876,7 +876,7 @@ document.addEventListener('keydown', function (e) {
 // INIT
 
 function init() {
-    setupSilentAudio();
+    // setupSilentAudio();
     loadYTScript();
 
     var savedVolume = localStorage.getItem('ytsp_volume');

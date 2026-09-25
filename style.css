@@ -832,14 +832,24 @@ input[type="range"]::-moz-range-track {
     }
 }
 
-#yt-player-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 1px;
-    height: 1px;
-    opacity: 0.01;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: -1;
+/*#yt-player-container {*/
+/*    position: fixed;*/
+/*    top: 0;*/
+/*    left: 0;*/
+/*    width: 1px;*/
+/*    height: 1px;*/
+/*    opacity: 0.01;*/
+/*    pointer-events: none;*/
+/*    overflow: hidden;*/
+/*    z-index: -1;*/
+/*}*/
+
+#yt-player {
+    width: 100%;
+    height: 100%;
+}
+#yt-player iframe {
+    width: 100%;
+    height: 100%;
+    display: block;
 }

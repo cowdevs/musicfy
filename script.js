@@ -464,7 +464,7 @@ function onPlayerStateChange(e) {
         overlayIconPlay.style.display = 'none';
         overlayIconPause.style.display = '';
         powerDot.classList.add('playing');
-        // silentAudio.play().catch(function () {});
+        silentAudio.play().catch(function () {});
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         startProgressTimer();
         updateWindowTitle();
@@ -475,7 +475,7 @@ function onPlayerStateChange(e) {
         overlayIconPlay.style.display = '';
         overlayIconPause.style.display = 'none';
         powerDot.classList.remove('playing');
-        // silentAudio.pause();
+        silentAudio.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else if (e.data === S.ENDED) {
         playNext(true);
@@ -509,9 +509,9 @@ function playTrackAt(index) {
     state.currentIndex = index;
     var track = state.queue[index];
 
-    displayPlaceholder.textContent = 'Loading track…';
-    displayPlaceholder.style.display = '';
-    albumArt.style.display = 'none';
+    // displayPlaceholder.textContent = 'Loading track…';
+    // displayPlaceholder.style.display = '';
+    // albumArt.style.display = 'none';
 
     ensurePlayer(track.id);
     updateNowPlayingUI(track);
@@ -522,12 +522,12 @@ function playTrackAt(index) {
     bestThumbnailUrl(track.id, function (src) {
         if (myToken !== thumbLoadToken) return;
         if (!src) {
-            displayPlaceholder.textContent = track.title;
+            // displayPlaceholder.textContent = track.title;
             return;
         }
-        albumArt.src = src;
-        albumArt.style.display = '';
-        displayPlaceholder.style.display = 'none';
+        // albumArt.src = src;
+        // albumArt.style.display = '';
+        // displayPlaceholder.style.display = 'none';
         if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
             navigator.mediaSession.metadata.artwork = [{src: src, type: 'image/jpeg'}];
         }
@@ -728,6 +728,7 @@ function setupMediaSessionHandlers() {
     if (!('mediaSession' in navigator)) return;
     try {
         navigator.mediaSession.setActionHandler('play', function () {
+            silentAudio.play().catch(function () {});
             state.player && state.player.playVideo();
         });
         navigator.mediaSession.setActionHandler('pause', function () {
@@ -876,7 +877,7 @@ document.addEventListener('keydown', function (e) {
 // INIT
 
 function init() {
-    // setupSilentAudio();
+    setupSilentAudio();
     loadYTScript();
 
     var savedVolume = localStorage.getItem('ytsp_volume');

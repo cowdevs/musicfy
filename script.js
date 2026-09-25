@@ -30,11 +30,6 @@ var savedSection = document.getElementById('saved-section');
 var savedList = document.getElementById('saved-list');
 
 var powerDot = document.getElementById('power-dot');
-var albumArt = document.getElementById('album-art');
-var displayPlaceholder = document.getElementById('display-placeholder');
-var displayOverlay = document.getElementById('display-overlay');
-var overlayIconPlay = document.getElementById('overlay-icon-play');
-var overlayIconPause = document.getElementById('overlay-icon-pause');
 var trackTitleEl = document.getElementById('track-title');
 var trackChannelEl = document.getElementById('track-channel');
 
@@ -461,8 +456,6 @@ function onPlayerStateChange(e) {
         state.isPlaying = true;
         iconPlay.style.display = 'none';
         iconPause.style.display = '';
-        overlayIconPlay.style.display = 'none';
-        overlayIconPause.style.display = '';
         powerDot.classList.add('playing');
         silentAudio.play().catch(function () {});
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
@@ -472,8 +465,6 @@ function onPlayerStateChange(e) {
         state.isPlaying = false;
         iconPlay.style.display = '';
         iconPause.style.display = 'none';
-        overlayIconPlay.style.display = '';
-        overlayIconPause.style.display = 'none';
         powerDot.classList.remove('playing');
         silentAudio.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -485,7 +476,7 @@ function onPlayerStateChange(e) {
 function onPlayerError(e) {
     lastPlayerSignal = Date.now();
     console.warn('YouTube player error code:', e && e.data, 'for video', state.queue[state.currentIndex] && state.queue[state.currentIndex].id);
-    showToast('Skipping a track that can\u2019t be embedded here…');
+    showToast('Track unavailable. Skipping...');
     var removedIndex = state.currentIndex;
     state.queue.splice(removedIndex, 1);
     renderQueue();
@@ -509,10 +500,6 @@ function playTrackAt(index) {
     state.currentIndex = index;
     var track = state.queue[index];
 
-    displayPlaceholder.textContent = 'Loading track…';
-    displayPlaceholder.style.display = '';
-    albumArt.style.display = 'none';
-
     ensurePlayer(track.id);
     updateNowPlayingUI(track);
     updateMediaSessionMetadata(track);
@@ -520,14 +507,7 @@ function playTrackAt(index) {
 
     var myToken = ++thumbLoadToken;
     bestThumbnailUrl(track.id, function (src) {
-        if (myToken !== thumbLoadToken) return;
-        if (!src) {
-            displayPlaceholder.textContent = track.title;
-            return;
-        }
-        albumArt.src = src;
-        albumArt.style.display = '';
-        displayPlaceholder.style.display = 'none';
+        if (myToken !== thumbLoadToken || !src) return;
         if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
             navigator.mediaSession.metadata.artwork = [{src: src, type: 'image/jpeg'}];
         }
@@ -816,8 +796,6 @@ queueBtn.addEventListener('click', openDrawer);
 drawerCloseBtn.addEventListener('click', closeDrawer);
 drawerBackdrop.addEventListener('click', closeDrawer);
 reshuffleBtn.addEventListener('click', reshuffleQueue);
-
-displayOverlay.addEventListener('click', togglePlay);
 
 playPauseBtn.addEventListener('click', togglePlay);
 prevBtn.addEventListener('click', playPrev);

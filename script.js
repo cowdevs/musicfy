@@ -509,9 +509,9 @@ function playTrackAt(index) {
     state.currentIndex = index;
     var track = state.queue[index];
 
-    // displayPlaceholder.textContent = 'Loading track…';
-    // displayPlaceholder.style.display = '';
-    // albumArt.style.display = 'none';
+    displayPlaceholder.textContent = 'Loading track…';
+    displayPlaceholder.style.display = '';
+    albumArt.style.display = 'none';
 
     ensurePlayer(track.id);
     updateNowPlayingUI(track);
@@ -522,12 +522,12 @@ function playTrackAt(index) {
     bestThumbnailUrl(track.id, function (src) {
         if (myToken !== thumbLoadToken) return;
         if (!src) {
-            // displayPlaceholder.textContent = track.title;
+            displayPlaceholder.textContent = track.title;
             return;
         }
-        // albumArt.src = src;
-        // albumArt.style.display = '';
-        // displayPlaceholder.style.display = 'none';
+        albumArt.src = src;
+        albumArt.style.display = '';
+        displayPlaceholder.style.display = 'none';
         if ('mediaSession' in navigator && navigator.mediaSession.metadata) {
             navigator.mediaSession.metadata.artwork = [{src: src, type: 'image/jpeg'}];
         }

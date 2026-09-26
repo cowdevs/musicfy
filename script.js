@@ -422,11 +422,11 @@ function initPlayer(videoId) {
         playerVars.origin = window.location.origin;
     }
     state.player = new YT.Player('yt-player', {
-        height: '180',
-        width: '320',
+        // height: '180',
+        // width: '320',
         videoId: videoId,
         playerVars: playerVars,
-        isPLaying: true,
+        isPlaying: true,
         events: {
             onReady: onPlayerReady,
             onStateChange: onPlayerStateChange,

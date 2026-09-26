@@ -57,8 +57,6 @@ var queueListEl = document.getElementById('queue-list');
 var toastEl = document.getElementById('toast');
 var silentAudio = document.getElementById('silent-audio');
 
-const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 
 // UTILITY FUNCTIONS
 
@@ -78,6 +76,13 @@ function shuffle(arr) {
     }
     return a;
 }
+
+function isMobile() {
+    return /Android|iPad|iPhone|iPod|Mobile|Windows Phone/i.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+var isMobileDevice = isMobile();
 
 function formatTime(sec) {
     if (!isFinite(sec) || sec < 0) sec = 0;
@@ -459,7 +464,7 @@ function onPlayerStateChange(e) {
         iconPlay.style.display = 'none';
         iconPause.style.display = '';
         powerDot.classList.add('playing');
-        if (!isMobile) silentAudio.play().catch(function () {});
+        if (!isMobileDevice) silentAudio.play().catch(function () {});
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         startProgressTimer();
         updateWindowTitle();
@@ -468,7 +473,7 @@ function onPlayerStateChange(e) {
         iconPlay.style.display = '';
         iconPause.style.display = 'none';
         powerDot.classList.remove('playing');
-        if (!isMobile) silentAudio.pause();
+        if (!isMobileDevice) silentAudio.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else if (e.data === S.ENDED) {
         playNext(true);
@@ -710,7 +715,7 @@ function setupMediaSessionHandlers() {
     if (!('mediaSession' in navigator)) return;
     try {
         navigator.mediaSession.setActionHandler('play', function () {
-            if (!isMobile) silentAudio.play().catch(function () {});
+            if (!isMobileDevice) silentAudio.play().catch(function () {});
             state.player && state.player.playVideo();
         });
         navigator.mediaSession.setActionHandler('pause', function () {
@@ -741,9 +746,8 @@ function updateMediaSessionMetadata(track, src) {
 }
 
 function setupSilentAudio() {
-    if (isMobile) return;
     var sampleRate = 8000;
-    var seconds = 2;
+    var seconds = 10;
     var numSamples = sampleRate * seconds;
     var buffer = new ArrayBuffer(44 + numSamples);
     var view = new DataView(buffer);
@@ -858,7 +862,7 @@ document.addEventListener('keydown', function (e) {
 // INIT
 
 function init() {
-    if (!isMobile) setupSilentAudio();
+    if (!isMobileDevice) setupSilentAudio();
     loadYTScript();
 
     var savedVolume = localStorage.getItem('ytsp_volume');

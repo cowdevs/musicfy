@@ -57,6 +57,8 @@ var queueListEl = document.getElementById('queue-list');
 var toastEl = document.getElementById('toast');
 var silentAudio = document.getElementById('silent-audio');
 
+const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 
 // UTILITY FUNCTIONS
 
@@ -457,7 +459,7 @@ function onPlayerStateChange(e) {
         iconPlay.style.display = 'none';
         iconPause.style.display = '';
         powerDot.classList.add('playing');
-        silentAudio.play().catch(function () {});
+        if (!isMobile) silentAudio.play().catch(function () {});
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         startProgressTimer();
         updateWindowTitle();
@@ -466,7 +468,7 @@ function onPlayerStateChange(e) {
         iconPlay.style.display = '';
         iconPause.style.display = 'none';
         powerDot.classList.remove('playing');
-        silentAudio.pause();
+        if (!isMobile) silentAudio.pause();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else if (e.data === S.ENDED) {
         playNext(true);
@@ -708,7 +710,7 @@ function setupMediaSessionHandlers() {
     if (!('mediaSession' in navigator)) return;
     try {
         navigator.mediaSession.setActionHandler('play', function () {
-            silentAudio.play().catch(function () {});
+            if (!isMobile) silentAudio.play().catch(function () {});
             state.player && state.player.playVideo();
         });
         navigator.mediaSession.setActionHandler('pause', function () {
@@ -739,6 +741,7 @@ function updateMediaSessionMetadata(track, src) {
 }
 
 function setupSilentAudio() {
+    if (isMobile) return;
     var sampleRate = 8000;
     var seconds = 2;
     var numSamples = sampleRate * seconds;
@@ -855,7 +858,7 @@ document.addEventListener('keydown', function (e) {
 // INIT
 
 function init() {
-    setupSilentAudio();
+    if (!isMobile) setupSilentAudio();
     loadYTScript();
 
     var savedVolume = localStorage.getItem('ytsp_volume');
